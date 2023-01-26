@@ -27,8 +27,6 @@ Page.beforeValidate(async (page, options) => {
   }
 })
 
-// Page.addHook('beforeValidate', (title) => title.replace(/\s+/g, '_').replace(/\W/g, ''))
-
 const User = db.define('user', {
   name: {
     type: Sequelize.STRING,
@@ -42,6 +40,8 @@ const User = db.define('user', {
     },
   },
 })
+
+Page.belongsTo(User, { as: 'author' })
 
 module.exports = {
   db,

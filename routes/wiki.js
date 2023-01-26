@@ -1,6 +1,6 @@
 const express = require('express')
 const wikiRouter = express.Router()
-const { Page } = require('../models')
+const { Page, User } = require('../models')
 const { addPage, wikiPage, main } = require('../views')
 
 wikiRouter.get('/', async (req, res, next) => {
@@ -19,7 +19,8 @@ wikiRouter.get('/:slug', async (req, res, next) => {
         slug: req.params.slug,
       },
     })
-    res.send(wikiPage(page))
+    const author = await page.getAuthor()
+    res.send(wikiPage(page, author))
   } catch (error) {
     next(error)
   }
@@ -29,10 +30,17 @@ wikiRouter.post('/', async (req, res, next) => {
   const { title, content } = req.body
 
   try {
-    const page = await Page.create({
-      title,
-      content,
+    const [user, wasCreated] = await User.findOrCreate({
+      where: {
+        name: req.body.name,
+        email: req.body.email,
+      },
     })
+
+    const page = await Page.create(req.body)
+
+    // `setAuthor` returns a Promise! We should await it so we don't redirect before the author is set
+    await page.setAuthor(user)
 
     res.redirect(`/wiki/${page.slug}`)
   } catch (err) {
